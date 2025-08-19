@@ -9,11 +9,16 @@ class DB {
   Future<Database> get database async {
     if (_db != null) return _db!;
     final path = join(await getDatabasesPath(), 'routine_tracker.db');
-    _db = await openDatabase(path, version: 1, onCreate: _onCreate);
+    _db = await openDatabase(
+      path,
+      version: 1,
+      onCreate: _onCreate,
+    );
     return _db!;
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    // Time slots
     await db.execute('''
       CREATE TABLE timeslots(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,16 +28,30 @@ class DB {
       );
     ''');
 
+    // Goals
+    await db.execute('''
+      CREATE TABLE goals(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        total_days INTEGER NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL
+      );
+    ''');
+
+    // Templates (linked to goals)
     await db.execute('''
       CREATE TABLE templates(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         topic TEXT NOT NULL,
         target_count INTEGER NOT NULL,
         timeslot_id INTEGER NOT NULL,
-        total_days INTEGER NOT NULL
+        total_days INTEGER NOT NULL,
+        goal_id INTEGER
       );
     ''');
 
+    // Routines
     await db.execute('''
       CREATE TABLE routines(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -43,6 +62,7 @@ class DB {
       );
     ''');
 
+    // Progress
     await db.execute('''
       CREATE TABLE progress(
         id INTEGER PRIMARY KEY AUTOINCREMENT,

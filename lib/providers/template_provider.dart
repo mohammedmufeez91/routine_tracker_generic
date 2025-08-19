@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/template.dart';
 import '../models/routine.dart';
+import '../models/goal.dart'; // <-- Add this import
 import '../services/db.dart';
 
 class TemplateProvider extends ChangeNotifier {
@@ -31,11 +32,25 @@ class TemplateProvider extends ChangeNotifier {
     final db = await DB.instance.database;
     final tRow = (await db.query('templates', where: 'id = ?', whereArgs: [templateId], limit: 1)).first;
     final t = Template.fromMap(tRow);
-    final total = days ?? t.totalDays;
-    final s = (start ?? DateTime.now());
-    final startDate = DateTime(s.year, s.month, s.day);
-    final endDate = startDate.add(Duration(days: total - 1));
-    final r = Routine(templateId: templateId, startDate: startDate, endDate: endDate, totalDays: total);
+
+    DateTime startDate;
+    int totalDays;
+
+    if (t.goalId != null) {
+      // Fetch linked goal
+      final gRow = (await db.query('goals', where: 'id = ?', whereArgs: [t.goalId], limit: 1)).first;
+      final goal = Goal.fromMap(gRow); // Now Goal is recognized
+
+      startDate = goal.startDate;
+      totalDays = goal.totalDays;
+    } else {
+      totalDays = days ?? t.totalDays;
+      final s = start ?? DateTime.now();
+      startDate = DateTime(s.year, s.month, s.day);
+    }
+
+    final endDate = startDate.add(Duration(days: totalDays - 1));
+    final r = Routine(templateId: templateId, startDate: startDate, endDate: endDate, totalDays: totalDays);
     await db.insert('routines', r.toMap());
   }
 }

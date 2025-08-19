@@ -3,12 +3,13 @@ import 'package:provider/provider.dart';
 import 'providers/timeslot_provider.dart';
 import 'providers/template_provider.dart';
 import 'providers/progress_provider.dart';
+import 'providers/goal_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/manage_timeslots_screen.dart';
 import 'screens/create_template_screen.dart';
 import 'screens/daily_screen.dart';
 import 'screens/stats_screen.dart';
-import 'screens/create_goal_screen.dart';
+import 'screens/goal_setting.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,7 @@ class RoutineApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TimeSlotProvider()..init()),
         ChangeNotifierProvider(create: (_) => TemplateProvider()..init()),
         ChangeNotifierProvider(create: (_) => ProgressProvider()),
+        ChangeNotifierProvider(create: (_) => GoalProvider()..init()), // NEW: Goal provider
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -56,7 +58,7 @@ class RoutineApp extends StatelessWidget {
           '/create-template': (_) => const CreateTemplateScreen(),
           '/daily': (_) => const DailyScreen(),
           '/stats': (_) => const StatsScreen(),
-          '/goalsetting': (_) => const CreateGoalScreen(),
+          '/goalsetting': (_) => const GoalSettingScreen(),
         },
       ),
     );

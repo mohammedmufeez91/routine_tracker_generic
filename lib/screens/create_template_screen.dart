@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/timeslot_provider.dart';
 import '../providers/template_provider.dart';
+import '../providers/goal_provider.dart';
 import '../models/template.dart';
+import '../models/goal.dart';
 
 class CreateTemplateScreen extends StatefulWidget {
   const CreateTemplateScreen({super.key});
@@ -18,6 +20,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
   String _topic = '';
   int _target = 0;
   int? _slotId;
+  int? _selectedGoalId;
 
   @override
   void dispose() {
@@ -29,6 +32,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
   Widget build(BuildContext context) {
     final slots = context.watch<TimeSlotProvider>().slots;
     final templateProv = context.watch<TemplateProvider>();
+    final goalProv = context.watch<GoalProvider>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Create Template')),
@@ -78,6 +82,28 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                   ),
                   const SizedBox(height: 8),
 
+                  // Goal Dropdown
+          DropdownButtonFormField<int>(
+            decoration: const InputDecoration(labelText: 'Link Goal'),
+            value: _selectedGoalId,
+            items: goalProv.goals
+                .map((g) => DropdownMenuItem(
+                value: g.id,
+                child: Text('${g.name} (${g.totalDays} days)')))
+                .toList(),
+            validator: (v) => v == null ? 'Pick a goal' : null,
+            onChanged: (v) {
+              setState(() {
+                _selectedGoalId = v;
+
+                // Auto-fill days if a goal is selected
+                final selectedGoal = goalProv.goals.firstWhere((g) => g.id == v, orElse: () => Goal(id: null, name: '', totalDays: 0, startDate: DateTime.now(), endDate: DateTime.now()));
+                _daysController.text = selectedGoal.totalDays.toString();
+              });
+            },
+          ),
+                  const SizedBox(height: 8),
+
                   // No. of days TextField
                   TextFormField(
                     controller: _daysController,
@@ -96,7 +122,6 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                       return null;
                     },
                   ),
-
                   const SizedBox(height: 12),
 
                   FilledButton.icon(
@@ -104,7 +129,6 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                       if (_formKey.currentState!.validate()) {
                         _formKey.currentState!.save();
 
-                        // Parse days from controller
                         final int days = int.parse(_daysController.text);
 
                         final id = await templateProv.addTemplate(Template(
@@ -112,6 +136,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                           targetCount: _target,
                           timeSlotId: _slotId!,
                           totalDays: days,
+                          goalId: _selectedGoalId, // Link goal
                         ));
 
                         await templateProv.createRoutineFromTemplate(id);
@@ -141,7 +166,7 @@ class _CreateTemplateScreenState extends State<CreateTemplateScreen> {
                   child: ListTile(
                     title: Text('${t.topic} (${t.targetCount})'),
                     subtitle: Text(
-                        'Days: ${t.totalDays} • Time slot id: ${t.timeSlotId}'),
+                        'Days: ${t.totalDays} • Time slot id: ${t.timeSlotId} • Goal id: ${t.goalId ?? '-'}'),
                   ),
                 ))
                     .toList(),
