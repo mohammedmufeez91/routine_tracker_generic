@@ -60,6 +60,14 @@ class HomeScreen extends StatelessWidget {
             icon: Icons.bar_chart,
             onTap: () => Navigator.pushNamed(context, '/goalsetting'),
           ),
+          HomeTile(
+            title: 'Analytics',
+            subtitle: 'Look into the details of your progress',
+            icon: Icons.analytics,
+            onTap: () {
+              Navigator.pushNamed(context, '/analytics');
+            },
+          ),
         ],
       ),
     );

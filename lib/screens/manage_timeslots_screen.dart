@@ -12,9 +12,17 @@ class ManageTimeSlotsScreen extends StatefulWidget {
 
 class _ManageTimeSlotsScreenState extends State<ManageTimeSlotsScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _name = '';
-  String _note = '';
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
+
   TimeOfDay _clock = const TimeOfDay(hour: 7, minute: 0);
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,23 +38,30 @@ class _ManageTimeSlotsScreenState extends State<ManageTimeSlotsScreen> {
               child: Column(
                 children: [
                   TextFormField(
-                    decoration: const InputDecoration(labelText: 'Name (e.g., Morning before Fajr)'),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    onSaved: (v) => _name = v!.trim(),
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                        labelText: 'Name (e.g., Morning before Fajr)'),
+                    validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
-                    decoration: const InputDecoration(labelText: 'Note (optional)'),
-                    onSaved: (v) => _note = v?.trim() ?? '',
+                    controller: _noteController,
+                    decoration:
+                    const InputDecoration(labelText: 'Note (optional)'),
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(child: Text('Clock: ${_clock.format(context)}')),
+                      Expanded(
+                          child: Text('Clock: ${_clock.format(context)}')),
                       OutlinedButton(
                         onPressed: () async {
-                          final picked = await showTimePicker(context: context, initialTime: _clock);
-                          if (picked != null) setState(() => _clock = picked);
+                          final picked = await showTimePicker(
+                              context: context, initialTime: _clock);
+                          if (picked != null) {
+                            setState(() => _clock = picked);
+                          }
                         },
                         child: const Text('Pick Time'),
                       )
@@ -56,15 +71,29 @@ class _ManageTimeSlotsScreenState extends State<ManageTimeSlotsScreen> {
                   FilledButton.icon(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        _formKey.currentState!.save();
                         final slot = TimeSlot(
-                          name: _name,
-                          note: _note.isEmpty ? null : _note,
+                          name: _nameController.text.trim(),
+                          note: _noteController.text.trim().isEmpty
+                              ? null
+                              : _noteController.text.trim(),
                           clock: _clock.format(context),
                         );
                         await prov.add(slot);
+
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Time slot added')));
+                          // Reset fields
+                          _nameController.clear();
+                          _noteController.clear();
+                          setState(() {
+                            _clock = const TimeOfDay(hour: 7, minute: 0);
+                          });
+
+                          // Hide keyboard
+                          FocusScope.of(context).unfocus();
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Time slot added')),
+                          );
                         }
                       }
                     },
